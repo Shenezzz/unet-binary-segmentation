@@ -231,9 +231,10 @@ IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 
 
 def visualize_predictions(dataset, n=4, save_path="unet_predictions.png"):
-    model = UNet()
-    model.load_state_dict(torch.load("unet_pets.pt"))
-    model.to(device)
+
+    # model = UNet()
+    # model.load_state_dict(torch.load("unet_pets.pt"))
+    # model.to(device)
     model.eval()
     fig, axes = plt.subplots(5, n, figsize=(n * 2, 9))
 
@@ -273,7 +274,7 @@ def visualize_predictions(dataset, n=4, save_path="unet_predictions.png"):
 
 
 if __name__ == "__main__":
-    # train_unet(num_epochs=15)
+    train_unet(num_epochs=15)
     visualize_predictions(val_dataset)
-    # torch.save(model.state_dict(), "unet_pets.pth")
-    # print("Model weights saved to unet_pets.pth")
+    torch.save(model.state_dict(), "unet_pets.pth")
+    print("Model weights saved to unet_pets.pth")
