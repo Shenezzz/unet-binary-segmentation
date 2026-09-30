@@ -159,7 +159,7 @@ class UNet(nn.Module):
         d1 = torch.cat([d1, e1], dim=1)
         d1 = self.dec1(d1)
 
-        return self.final_conv(d1)
+        return self.final_conv(d1) # 3*128*128 -> 1*128*128 (the final feature map martix itself is considered as logits)
 
 
 model = UNet(in_channels=3, out_channels=1, base_channels=32).to(device)
@@ -212,7 +212,7 @@ def run_one_epoch(model, loader, criterion, optimizer=None):
     return total_loss / n_batches, total_dice / n_batches
 
 
-def train_unet(num_epochs=15):
+def train_unet(num_epochs=30):
     print("\nStarting training...\n")
     for epoch in range(1, num_epochs + 1):
         train_loss, train_dice = run_one_epoch(
@@ -230,9 +230,12 @@ IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
 IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 
 
-def visualize_predictions(model, dataset, n=4, save_path="unet_predictions.png"):
+def visualize_predictions(dataset, n=4, save_path="unet_predictions.png"):
+    model = UNet()
+    model.load_state_dict(torch.load("unet_pets.pt"))
+    model.to(device)
     model.eval()
-    fig, axes = plt.subplots(3, n, figsize=(n * 3, 9))
+    fig, axes = plt.subplots(5, n, figsize=(n * 2, 9))
 
     for i in range(n):
         image, mask = dataset[i]
@@ -255,6 +258,14 @@ def visualize_predictions(model, dataset, n=4, save_path="unet_predictions.png")
         axes[2, i].imshow(pred.numpy(), cmap="gray")
         axes[2, i].set_title("U-Net prediction")
         axes[2, i].axis("off")
+        
+        axes[3, i].imshow(img_display * pred.numpy()[..., None], cmap="gray")
+        axes[3, i].set_title("Prediction Region")
+        axes[3, i].axis("off")
+        
+        axes[4, i].imshow(img_display * mask.squeeze().numpy()[..., None], cmap="gray")
+        axes[4, i].set_title("Masked Region")
+        axes[4, i].axis("off")
 
     plt.tight_layout()
     plt.savefig(save_path, dpi=150)
@@ -262,7 +273,7 @@ def visualize_predictions(model, dataset, n=4, save_path="unet_predictions.png")
 
 
 if __name__ == "__main__":
-    train_unet(num_epochs=15)
-    visualize_predictions(model, val_dataset)
-    torch.save(model.state_dict(), "unet_pets.pth")
-    print("Model weights saved to unet_pets.pth")
+    # train_unet(num_epochs=15)
+    visualize_predictions(val_dataset)
+    # torch.save(model.state_dict(), "unet_pets.pth")
+    # print("Model weights saved to unet_pets.pth")
